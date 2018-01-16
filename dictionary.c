@@ -45,7 +45,11 @@ bool check(const char *word)
   for (int i = 0, length = strlen(word); i < length; i++)
     {
 
+
       char_place = char_position ( word[i] );
+
+      if (char_place == -1)
+        continue;
 
 
       // If this children node was never loaded with a character
@@ -74,6 +78,7 @@ bool load(const char *dictionary)
     node *traverse = NULL;
 
 
+
     FILE *dict_file = fopen (dictionary, "r");
 
     if ( dict_file == NULL)
@@ -86,29 +91,38 @@ bool load(const char *dictionary)
     // Initilialize the HEAD of Trie for the first time
     // ---------------------------------------------
     // which one is better?
-    //ROOT = (node *) malloc (node_size);
-    ROOT = create_node();
+    ROOT = (node *) malloc (node_size);
+    //ROOT = create_node();
     // ---------------------------------------------
 
 
-    char word[LENGTH + 1] = {};
+    // to fill array with words from dictionary file
+    char word [ LENGTH ] = {};
+    // for not touching ROOT and doing itteration with another pointer
     traverse = ROOT;
+    // to put new char into one of nodes's chldren[i]
+    node *new_char = NULL;
+
 
     while ( fscanf (dict_file, "%s", word) != EOF )
     {
-
+      //printf (">> %s\n", word);
       for (int i = 0, length = strlen(word); i < length; i++)
         {
 
+          //printf ("Char place: %i, Char (alpha): %c\n", char_place, word[i]);
+
           char_place = char_position ( word[i] );
+
+          //printf ("Char place: %i, Char (alpha): %c\n", char_place, word[i]);
 
           // If this children node was never loaded with a character
           if ( traverse -> children[char_place] == NULL)
             {
               // ---------------------------------------------
               // which one is better?
-              //node *new_char = (node *) malloc (node_size);
-              node *new_char = create_node();
+              new_char = (node *) malloc (node_size);
+              //new_char = create_node();
               // ---------------------------------------------
               traverse -> children[char_place] = new_char;
             }
@@ -118,7 +132,7 @@ bool load(const char *dictionary)
 
         }
 
-      traverse -> is_word = true;
+     // traverse -> is_word = true;
     }
 
     // Close the file
@@ -221,11 +235,15 @@ int char_position (char c)
 
   // If it's upper case
   else if( c >= 'A' && c <= 'Z')
-    return c - 65;
+    return c - 'A';
 
   // If it's lower case
+  else if (c >= 'a' && c <= 'a')
+    return c - 'a';
+
+  // If the char is out of place
   else
-    return c - 97;
+    return -1;
 
 }
 
