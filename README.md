@@ -18,7 +18,7 @@ For more information check out [CS50 Speller](https://docs.cs50.net/problems/spe
 
 Compile it with make 
 
-In speller directory type:
+Open your terminal and navigate to speller directory:
 
 ```
 $ make
