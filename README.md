@@ -29,7 +29,7 @@ $ make
 Run it like this:
 
 ```
-./speller dictionaries/large texts/alice.txt
+$ ./speller dictionaries/large texts/alice.txt
 ```
 
 ### Break down
