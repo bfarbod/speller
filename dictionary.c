@@ -19,7 +19,6 @@ node *ROOT = NULL;
 long int node_size = (long int) sizeof (node);
 
 
-
 /**
  * Returns true if word is in dictionary else false.
  */
@@ -28,6 +27,7 @@ bool check(const char *word)
 
   // Function prototype
   int char_position (char c);
+
 
   // The location of each character from zero in array children[]
   int char_place = 0;
@@ -52,12 +52,12 @@ bool check(const char *word)
         continue;
 
 
-      // If this children node was never loaded with a character
-      if (  traverse -> children[char_place] == NULL)
+      // If this children node was never loaded with a character then ...
+      if (  !traverse -> children[char_place] )
         return false;
 
-      else
-        traverse = traverse -> children[char_place];
+      // "else" dive into the characters of the word
+      traverse = traverse -> children[char_place];
     }
 
   return traverse -> is_word;
@@ -72,12 +72,6 @@ bool load(const char *dictionary)
     int char_position (char c);
     node *create_node (void);
 
-    // The location of each character from zero in array children[]
-    int char_place = 0;
-    // Don't use the head of trie to itterate
-    node *traverse = NULL;
-
-
 
     FILE *dict_file = fopen (dictionary, "r");
 
@@ -89,50 +83,51 @@ bool load(const char *dictionary)
 
 
     // Initilialize the HEAD of Trie for the first time
-    // ---------------------------------------------
-    // which one is better?
-    ROOT = (node *) malloc (node_size);
-    //ROOT = create_node();
-    // ---------------------------------------------
+    ROOT = create_node();
+
+    // The location of each character from zero in array children[]
+    int char_place = 0;
+    // Don't use the head of trie to itterate
+    node *traverse = NULL;
 
 
     // to fill array with words from dictionary file
-    char word [ LENGTH ] = {};
-    // for not touching ROOT and doing itteration with another pointer
-    traverse = ROOT;
-    // to put new char into one of nodes's chldren[i]
-    node *new_char = NULL;
+    char line [ LENGTH ];
 
 
-    while ( fscanf (dict_file, "%s", word) != EOF )
+
+
+    while ( fscanf (dict_file, "%s", line) != EOF )
     {
-      //printf (">> %s\n", word);
-      for (int i = 0, length = strlen(word); i < length; i++)
+      // for not touching ROOT and doing itteration with another pointer
+      traverse = ROOT;
+      for (int i = 0, length = strlen(line); i < length; i++)
         {
 
-          //printf ("Char place: %i, Char (alpha): %c\n", char_place, word[i]);
+          char_place = char_position ( line[i] );
 
-          char_place = char_position ( word[i] );
+/*
+          if (char_place == -1)
+          {
+            printf ("%c Out of order character!\n", line[i]);
+            continue;
+          }
+*/
 
-          //printf ("Char place: %i, Char (alpha): %c\n", char_place, word[i]);
+          // If this children node was never loaded with a character then create one
+          if ( !traverse -> children[char_place] )
+            traverse -> children[char_place] = create_node();
 
-          // If this children node was never loaded with a character
-          if ( traverse -> children[char_place] == NULL)
-            {
-              // ---------------------------------------------
-              // which one is better?
-              new_char = (node *) malloc (node_size);
-              //new_char = create_node();
-              // ---------------------------------------------
-              traverse -> children[char_place] = new_char;
-            }
-
-          else
-            traverse = traverse -> children[char_place];
+          /**
+           * There's no need for "else" we either loaded the node and now we need
+           * to traverese to it or we had the node loaded from before and we need
+           * to dive into it.
+           */
+          traverse = traverse -> children[char_place];
 
         }
 
-     // traverse -> is_word = true;
+      traverse -> is_word = true;
     }
 
     // Close the file
@@ -143,10 +138,7 @@ bool load(const char *dictionary)
      *  dictionary file never loaded into memory.
      */
 
-    if ( traverse == ROOT)
-      return false;
-    else
-      return true;
+    return traverse != ROOT;
 }
 
 /**
@@ -155,12 +147,39 @@ bool load(const char *dictionary)
 unsigned int size(void)
 {
   // Function's prototype
-  int count_all (node *root);
+  unsigned int count_all (node *root);
 
   // Don't use the head of trie to itterate
   node *traverse = ROOT;
 
   return count_all(traverse);
+
+  // return total_words;
+}
+
+/**
+ * count all the node that has a character
+ */
+
+unsigned int count_all (node *root)
+{
+
+  unsigned int sum = 0;
+
+  if ( !root )
+    return 0;
+
+
+  if ( root -> is_word )
+    sum++;
+
+
+  for (int i = 0; i <= 26; i++)
+    sum += count_all (root -> children[i]);
+
+
+  return sum;
+
 }
 
 /**
@@ -193,30 +212,6 @@ bool free_all (node *root)
 }
 
 
-/**
- * count all the node that has a character
- */
-
-int count_all (node *root)
-{
-
-  int sum = 0;
-
-  if ( !root )
-    return 0;
-
-
-  if ( root -> is_word )
-    return 1;
-
-
-  for (int i = 0; i <= 26; i++)
-    sum += count_all (root -> children[i]);
-
-
-  return sum;
-
-}
 
 /**
  * To make sure that the character would be put in
@@ -225,6 +220,8 @@ int count_all (node *root)
  * need to subtract 65 ( ASCII character: 'A') or
  * 97 ( ASCII character:'a') from the character or
  * simply return it if it's a apostrophe (')
+ * and if it's none of the above case then simply
+ * return -1
   */
 int char_position (char c)
 {
@@ -238,7 +235,7 @@ int char_position (char c)
     return c - 'A';
 
   // If it's lower case
-  else if (c >= 'a' && c <= 'a')
+  else if (c >= 'a' && c <= 'z')
     return c - 'a';
 
   // If the char is out of place
